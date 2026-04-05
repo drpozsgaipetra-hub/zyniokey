@@ -1,30 +1,19 @@
-content = open('app/api/transcribe/route.ts').read()
-new_content = '''import { NextRequest, NextResponse } from "next/server";
+content = '''import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  try {
-    const formData = await req.formData();
-    const file = formData.get("file");
+  const body = await req.json();
 
-    if (!file) {
-      return NextResponse.json({ error: "No file" }, { status: 400 });
-    }
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_API_KEY as string,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(body),
+  });
 
-    const openaiForm = new FormData();
-    openaiForm.append("file", file as Blob, "recording.webm");
-    openaiForm.append("model", "whisper-1");
-    openaiForm.append("language", "hu");
-
-    const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-      method: "POST",
-      headers: { Authorization: "Bearer " + process.env.OPENAI_API_KEY },
-      body: openaiForm,
-    });
-
-    const data = await res.json();
-    return NextResponse.json(data);
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
-  }
+  const data = await res.json();
+  return NextResponse.json(data);
 }'''
-open('app/api/transcribe/route.ts', 'w').write(new_content)
+open('app/api/profile/route.ts', 'w').write(content)
